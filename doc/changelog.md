@@ -1,5 +1,13 @@
 # Release notes
 
+## 0.2.0
+
+- Public `EPUBTextSection` and `EPUBPublication.textSection(at:limits:)` API for renderer-free XHTML extraction.
+- Chapter/resource identity, titles, linearity and namespace-aware EPUB semantic labels.
+- Structural whitespace, entity/CDATA decoding and lossless word-joiner handling.
+- Explicit malformed-content/media/index failures, per-section limits and cancellation.
+- Ported extraction regressions and new policy-neutral, namespace, Unicode and limit tests.
+
 ## 0.1.0
 
 - Initial tagged release of the publication parser, pluggable reader API and bundled Foliate adapter.

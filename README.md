@@ -11,7 +11,7 @@ Requires Xcode 27 and iOS/iPadOS 27+ or macOS 27+. The manifest uses Swift tools
 
 ## Installation
 
-Add `https://github.com/vocaro/EPUBReaderLib.git` at version **0.1.0** to your Swift package dependencies. Link
+Add `https://github.com/vocaro/EPUBReaderLib.git` at version **0.2.0** to your Swift package dependencies. Link
 `EPUBReaderLib` for publication parsing and reader contracts; also link `EPUBReaderFoliate` to
 use the bundled engine. No JavaScript build step or asset download is required. The examples below import
 `EPUBReaderLib`, `EPUBReaderFoliate` and `Foundation`.
@@ -110,3 +110,9 @@ See [release and API compatibility policy](doc/releasing.md) and [release notes]
 The library is MIT licensed. ZIPFoundation is MIT. Bundled foliate-js is MIT and its zip.js bundle
 is BSD-3-Clause. Upstream license texts ship in the resource bundle; their pinned identities are
 in [the vendor manifest](doc/vendor-manifest.json). See [third-party notices](doc/third-party-notices.md).
+
+## Extracting text
+
+Use `publication.textSection(at:)` to read XHTML text, chapter titles and EPUB semantic roles
+without creating a viewer. Resource hrefs and spine indices connect the result to the book.
+See the [text-extraction API](doc/text-extraction.md) for limits, errors and normalization rules.

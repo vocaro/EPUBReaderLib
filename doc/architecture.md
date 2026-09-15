@@ -1,7 +1,7 @@
 # Architecture
 
 `EPUBReaderLib` owns immutable publications and public reader protocols. It imports Foundation,
-CryptoKit, ZIPFoundation and SwiftUI, and has no dependency on WebKit or Foliate. Parsing does not
+CryptoKit, ZIPFoundation, SwiftUI and Apple’s libxml2 module, and has no dependency on WebKit or Foliate. Parsing does not
 create a view or JavaScript context. `EPUBReaderFoliate` owns the WebKit adapter, validated message
 bridge, custom URL scheme and bundled foliate-js assets. Nothing in the engine-neutral interface
 requires a web view, JavaScript, a DOM node or EPUB CFI.
@@ -74,3 +74,12 @@ RTL, vertical-writing and illustrated synthetic books on OS 27. This is regressi
 a general fidelity guarantee. Host apps must present `.disclosure` and `.failed` events appropriately
 and may provide their own fallback. `EPUBReaderTesting` offers reusable adapter-contract checks
 without WebKit or XCTest dependencies; rendering fidelity stays with each adapter's tests.
+
+## Structural text
+
+The [text-extraction API](text-extraction.md) reads one spine occurrence at a time from the
+validated snapshot. Apple’s streaming libxml2 reader preserves literal and numeric-reference
+U+FEFF word joiners that Foundation XMLParser drops in character callbacks. External DTD loading,
+entity substitution and networking are disabled. Limits and cancellation bound the walk.
+The library reports all semantic roles and empty/nonlinear sections; filtering and indexing belong
+to the host. No third-party dependency is added for text extraction.
