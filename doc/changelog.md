@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.2.3
+
+- Use adaptive CSS system colors for the Foliate dark-mode fallback.
+- Preserve live iOS toolbar clearance and avoid redundant scroll-inset updates.
+- Public APIs, dependencies and bookmark formats are unchanged.
+
 ## 0.2.2
 
 - Fix missing tables of contents when navigation role tokens use tabs or line breaks ([#1](https://github.com/vocaro/EPUBReaderLib/issues/1)).

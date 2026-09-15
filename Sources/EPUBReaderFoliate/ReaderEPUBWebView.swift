@@ -137,7 +137,12 @@ struct ReaderEPUBWebView {
         view.backgroundColor = background
         view.scrollView.backgroundColor = background
         view.underPageBackgroundColor = background
-        view.scrollView.contentInset = UIEdgeInsets(top: 48, left: 0, bottom: 64, right: 0)
+        // Let the enclosing navigation toolbar supply its live safe-area clearance.
+        view.scrollView.contentInsetAdjustmentBehavior = .automatic
+        let inset = UIEdgeInsets(top: 48, left: 0, bottom: 64, right: 0)
+        if view.scrollView.contentInset != inset {
+            view.scrollView.contentInset = inset
+        }
         if #available(iOS 26, *) {
             view.scrollView.topEdgeEffect.style = .soft
             view.scrollView.bottomEdgeEffect.style = .soft

@@ -292,8 +292,8 @@ enum ReaderEPUBTypography {
             "html,body{font-size:\(formatted(size))px!important;"
                 + "color-scheme:\(isDark ? "dark" : "light")}"
         if isDark {
-            css += "html,body{background:#000!important;color:#e6e6e6!important}"
-            css += "a,a:link,a:visited{color:#8ab4ff!important}"
+            css += "html,body{background:Canvas!important;color:CanvasText!important}"
+            css += "a,a:link,a:visited{color:LinkText!important}"
         }
         return css
     }

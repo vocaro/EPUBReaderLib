@@ -543,7 +543,8 @@ final class ReaderEPUBBridgeTests: XCTestCase {
         let dark = ReaderEPUBTypography.css(fontSizePoints: 17, isDark: true)
         XCTAssertFalse(dark.contains("*{"), dark)
         XCTAssertFalse(dark.contains("* {"), dark)
-        XCTAssertTrue(dark.contains("html,body{background:#000!important;color:#e6e6e6!important}"), dark)
+        XCTAssertTrue(dark.contains("html,body{background:Canvas!important;color:CanvasText!important}"), dark)
+        XCTAssertTrue(dark.contains("a,a:link,a:visited{color:LinkText!important}"), dark)
     }
 
 
