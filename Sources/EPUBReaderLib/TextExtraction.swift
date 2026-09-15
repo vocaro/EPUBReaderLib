@@ -53,15 +53,6 @@ extension EPUBPublication {
     }
 }
 
-/// Shared declaration policy for package/navigation XML and XHTML text extraction.
-enum XMLSafety {
-    static func hasSafeDeclarations(_ data: Data) -> Bool {
-        // Also recognize declaration tokens in UTF-16/32 input. Never resolve an external DTD.
-        let probe = String(decoding: data.filter { $0 != 0 }, as: UTF8.self).uppercased()
-        return !probe.contains("<!ENTITY") && probe.range(of: "<!DOCTYPE[^>]*\\[", options: .regularExpression) == nil
-    }
-}
-
 private struct NormalizedText {
     var text = ""
     var bytes = 0

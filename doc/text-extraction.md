@@ -43,7 +43,8 @@ their own cumulative text budget while iterating. `CancellationError` propagates
 `EPUBTextExtractionError` distinguishes invalid spine indices, unsupported media types, malformed
 XHTML and exceeded limits. Malformed markup, entity declarations and internal DTD subsets fail;
 there is no regex fallback that could turn scripts or styles into study text. Ordinary external
-DOCTYPE identifiers are allowed but never fetched or resolved.
+DOCTYPE identifiers are allowed but never fetched or resolved. Declaration-looking examples inside
+comments, CDATA or processing instructions are inert; the safety check follows XML lexical context.
 
 Hosts own section inclusion, chunking, embeddings, persistence and citation policy. Extracting a
 colophon is valid library behavior; whether it belongs in a study index is the host's decision.

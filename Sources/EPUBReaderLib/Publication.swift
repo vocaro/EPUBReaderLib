@@ -226,7 +226,7 @@ public struct EPUBPublication: Sendable {
         if let nav = resources.first(where: { $0.properties.contains("nav") }) {
             let root = try xml(nav.path)
             if let node = root.descendants("nav").first(where: {
-                ($0.attributes["type"] ?? "").split(separator: " ").contains("toc")
+                ($0.attributes["type"] ?? "").split(whereSeparator: \.isWhitespace).contains("toc")
             }) {
                 func items(_ node: XMLNode) throws -> [EPUBNavigationItem] {
                     try node.children.filter { $0.name == "li" }.map { li in

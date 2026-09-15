@@ -12,7 +12,9 @@ Opening copies the archive into a bounded snapshot and checks every archive entr
 Archive paths are decoded ZIP paths; manifest/navigation hrefs are URL references. The parser
 resolves references relative to the containing OPF/navigation document. It exposes metadata,
 manifest resources, linear/nonlinear spine entries with rendition layout, cover and nested contents. Reading resource
-bytes does not execute document content. XML expansion and external entity resolution are refused.
+bytes does not execute document content. XML expansion and external entity resolution are refused. Declaration screening distinguishes
+actual DTD syntax from comments, CDATA, processing instructions and quoted identifiers; it decodes
+UTF-16/32 input before inspecting markup.
 
 Default limits are 256 MiB compressed, 512 MiB expanded, 32 MiB per resource, 20,000 entries and
 4 MiB per XML document, with depth/node limits. Hosts may lower or raise import limits. Resources

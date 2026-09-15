@@ -1,5 +1,12 @@
 # Release notes
 
+## 0.2.2
+
+- Fix missing tables of contents when navigation role tokens use tabs or line breaks ([#1](https://github.com/vocaro/EPUBReaderLib/issues/1)).
+- Accept harmless XML declaration examples in comments, CDATA and processing instructions while continuing to reject real entity declarations and internal DTD subsets ([#2](https://github.com/vocaro/EPUBReaderLib/issues/2)).
+- Add eight parsing regressions, including Unicode encodings and quoted external identifiers.
+- Public APIs, dependencies, rendering engines and bookmark formats are unchanged.
+
 ## 0.2.1
 
 - Exclude script/style/template text inside embedded foreign content such as SVG, while preserving diagram labels.
