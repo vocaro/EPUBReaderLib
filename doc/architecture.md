@@ -11,13 +11,14 @@ requires a web view, JavaScript, a DOM node or EPUB CFI.
 Opening copies the archive into a bounded snapshot and checks every archive entry before returning.
 Archive paths are decoded ZIP paths; manifest/navigation hrefs are URL references. The parser
 resolves references relative to the containing OPF/navigation document. It exposes metadata,
-manifest resources, linear/nonlinear spine entries, cover and nested contents. Reading resource
+manifest resources, linear/nonlinear spine entries with rendition layout, cover and nested contents. Reading resource
 bytes does not execute document content. XML expansion and external entity resolution are refused.
 
 Default limits are 256 MiB compressed, 512 MiB expanded, 32 MiB per resource, 20,000 entries and
 4 MiB per XML document, with depth/node limits. Hosts may lower or raise import limits. Resources
 are retained in memory; the total memory footprint includes both compressed and expanded data.
 For large books, open on a background task. Task cancellation is checked while expanding entries.
+The optional import progress callback receives cumulative expanded bytes on that task's thread.
 A host granting security-scoped file access must keep access active until opening completes.
 
 Inputs need an EPUB mimetype, a container rootfile and a nonempty resolvable spine. Remote manifest
@@ -38,17 +39,22 @@ resources. A native implementation can return a SwiftUI/AppKit/UIKit-backed view
 position/error events describe effects. Cancellation before submission throws `CancellationError`;
 a submitted page turn cannot be undone by cancelling its caller. `close` is idempotent, disables
 callbacks and releases renderer references. Hosts serialize commands whose order matters and close
-sessions explicitly. Views returned by a closed session contain no reader.
+sessions explicitly. Views returned by a closed session contain no reader. Public readiness is
+emitted exactly once; later fidelity disclosures do not restart the session lifecycle.
 
 Portable location fields contain the publication fingerprint, section href, text quote and overall
-progression when known. Exact restoration uses a separately tagged engine bookmark. Foliate's
+progression when known. Resource `href`, navigation hrefs and location hrefs are encoded URL
+references; resource `path` is the decoded archive key. Exact restoration uses a separately tagged engine bookmark. Foliate's
 `epubcfi-v1` bookmark is accepted only for the same publication fingerprint and engine identifier.
 Other engines may offer approximate navigation by href or quote; this is not automatic bookmark
 conversion. The package does not promise cross-engine page, search or selection equivalence.
 
 ## Foliate isolation
 
-The adapter vendors a pinned upstream import closure. Its scheme handler serves only the host page,
+The adapter vendors a pinned upstream import closure. A small fail-closed URL compatibility patch
+is applied to `epub.js` when served, preserving encoded hrefs until the archive lookup. The upstream
+files remain unchanged and the patch is covered by rendering tests; see [release policy](releasing.md).
+Its scheme handler serves only the host page,
 bootstrap module, exact allowlisted assets and the publication snapshot. The WebKit data store is
 nonpersistent. Content Security Policy refuses remote origins and book scripts; book images, CSS,
 fonts and media can use allowed local/blob/data resources. The bootstrap removes connection hints
@@ -61,7 +67,10 @@ external links. Sandboxed macOS hosts need `com.apple.security.network.client` f
 processes to launch, even with remote document access prohibited. This entitlement does not change
 the adapter's navigation or content policy.
 
-The engine uses foliate-js's EPUB renderer for both reflowable and fixed-layout publications. The
-synthetic mounted-reader regression exercises reflowable EPUB; fixed-layout/media/vertical-script
-coverage is not a general fidelity guarantee. Host apps must present `.disclosure` and `.failed`
-events appropriately and may provide their own fallback.
+The engine uses foliate-js's EPUB renderer for both reflowable and fixed-layout publications.
+Sessions containing any fixed-layout spine item omit typography and scrolling capabilities and
+reject those controls; author-sized pages do not reflow. Tests cover reflowable, fixed-layout,
+RTL, vertical-writing and illustrated synthetic books on OS 27. This is regression coverage, not
+a general fidelity guarantee. Host apps must present `.disclosure` and `.failed` events appropriately
+and may provide their own fallback. `EPUBReaderTesting` offers reusable adapter-contract checks
+without WebKit or XCTest dependencies; rendering fidelity stays with each adapter's tests.

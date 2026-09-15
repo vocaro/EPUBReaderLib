@@ -15,9 +15,9 @@ import WebKit
 }
 
 @MainActor @Observable final class FoliateSession: EPUBReaderSession {
-    let capabilities: Set<EPUBReaderCapability> = [
+    var capabilities: Set<EPUBReaderCapability> { Set<EPUBReaderCapability>([
         .navigateHref, .pagination, .scrolling, .typography, .selection, .bookmarks, .locateText, .searchHighlight,
-    ]
+    ]).subtracting(publication.spine.contains { $0.layout == .prePaginated } ? [.scrolling, .typography] : []) }
     let publication: EPUBPublication
     let model = ReaderEPUBPrototypeModel()
     let source: ReaderEPUBAssetSource
@@ -25,6 +25,7 @@ import WebKit
     var onEvent: (@MainActor (EPUBReaderEvent) -> Void)?
     var style = EPUBReaderStyle()
     var closed = false
+    var didBecomeReady = false
 
     init(publication: EPUBPublication, action: EPUBSelectionAction?,
          onEvent: @escaping @MainActor (EPUBReaderEvent) -> Void) throws {
@@ -71,7 +72,8 @@ import WebKit
             }
             let path = String(reference).removingPercentEncoding
             guard let path, publication.resources.contains(where: { $0.path == path }),
-                  URLComponents(string: href)?.scheme == nil else {
+                  let components = URLComponents(string: href),
+                  components.scheme == nil, components.host == nil, components.query == nil else {
                 throw EPUBReaderError.invalidCommand("Unknown publication href")
             }
             commands = [.navigate(href: href)]
@@ -85,6 +87,12 @@ import WebKit
         case .clearSearch: commands = [.clearSearch]
         case .style(let newStyle):
             guard newStyle.fontSize.isFinite else { throw EPUBReaderError.invalidCommand("Nonfinite font size") }
+            if newStyle.flow == .scrolled && !capabilities.contains(.scrolling) {
+                throw EPUBReaderError.unsupported(.scrolling)
+            }
+            if newStyle.fontSize != style.fontSize && !capabilities.contains(.typography) {
+                throw EPUBReaderError.unsupported(.typography)
+            }
             var update: [ReaderEPUBCommand] = [.setStyle(css: ReaderEPUBTypography.css(
                 fontSizePoints: newStyle.fontSize, isDark: newStyle.isDark))]
             if newStyle.flow != style.flow {
@@ -114,7 +122,7 @@ import WebKit
     private func emit(_ event: EPUBReaderEvent) { if !closed { onEvent?(event) } }
     private func location(cfi: String?, quote: String? = nil, section: Int? = nil,
                           fraction: Double? = nil, title: String? = nil) -> EPUBLocation {
-        let href = section.flatMap { publication.spine.indices.contains($0) ? publication.spine[$0].resource.path : nil }
+        let href = section.flatMap { publication.spine.indices.contains($0) ? publication.spine[$0].resource.href : nil }
         return EPUBLocation(publicationID: publication.id, href: href, progression: fraction,
             title: title, quote: quote, bookmark: cfi.map {
                 EPUBEngineBookmark(engineID: FoliateEngine.identifier, format: "epubcfi-v1", value: $0)
@@ -123,7 +131,10 @@ import WebKit
     private func receive(_ message: ReaderEPUBMessage) {
         switch message {
         case .ready(let readiness):
-            emit(.ready)
+            if !didBecomeReady {
+                didBecomeReady = true
+                emit(.ready)
+            }
             if let text = ReaderEPUBDisclosure.text(for: readiness) { emit(.disclosure(text)) }
         case .relocated(let value):
             emit(.relocated(location(cfi: value.cfi, section: value.sectionIndex,

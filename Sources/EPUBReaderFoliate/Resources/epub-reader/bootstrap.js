@@ -208,6 +208,8 @@ const makeZipLoader = async blob => {
     // The member's name is passed to `f` as well as its entry, because both filters below decide
     // what to do from the name rather than from an argument the caller may not supply.
     const load = f => (name, ...args) => {
+        // The adapter keeps URL references encoded until this exact archive lookup.
+        try { name = decodeURIComponent(name) } catch { return null }
         if (isScriptName(name)) {
             scriptResourcesRefused += 1
             return null
@@ -236,7 +238,10 @@ const makeZipLoader = async blob => {
             const filtered = filterMarkup(text)
             return filtered === text ? blob : new Blob([filtered], { type: blob.type })
         }),
-        getSize: name => map.get(name)?.uncompressedSize ?? 0,
+        getSize: name => {
+            try { return map.get(decodeURIComponent(name))?.uncompressedSize ?? 0 }
+            catch { return 0 }
+        },
     }
 }
 

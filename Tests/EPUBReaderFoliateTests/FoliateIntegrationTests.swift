@@ -1,6 +1,5 @@
-#if os(macOS)
-import AppKit
 import EPUBReaderLib
+import EPUBReaderTesting
 import EPUBTestSupport
 import SwiftUI
 import WebKit
@@ -21,11 +20,7 @@ import XCTest
         let session = try engine.makeSession(publication: publication,
             selectionAction: EPUBSelectionAction(title: "Use passage") { selected = $0 }) { events.append($0) }
         let foliate = try XCTUnwrap(session as? FoliateSession)
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 600, height: 700),
-                              styleMask: [.titled], backing: .buffered, defer: false)
-        window.isReleasedWhenClosed = false
-        window.contentView = NSHostingView(rootView: EPUBReaderView(session: session))
-        window.orderFront(nil)
+        let window = ReaderTestWindow(session: session)
         defer { session.close(); window.close() }
         try await wait { events.contains(.ready) }
         for invalid in ["", "#fragment", "https://example.invalid/", "../secret"] {
@@ -86,5 +81,16 @@ import XCTest
         task.cancel()
         do { try await task.value; XCTFail("Canceled command accepted") } catch is CancellationError {}
     }
+    func testReusableEngineContract() async throws {
+        do {
+            try await EPUBEngineContract.verify(engine: FoliateEngine(),
+                publication: EPUBPublication.open(data: Fixture.epub()),
+                firstHref: "OPS/one.xhtml", secondHref: "OPS/two.xhtml", text: "Opening words are visible.") { session in
+                    let window = ReaderTestWindow(session: session)
+                    return { window.close() }
+                }
+        } catch let error as EPUBEngineContract.Failure {
+            XCTFail(error.description)
+        }
+    }
 }
-#endif

@@ -35,13 +35,21 @@ public struct EPUBResource: Equatable, Sendable, Identifiable {
     public let id: String
     /// Decoded archive path, relative to the archive root.
     public let path: String
+    /// URL-encoded archive-relative reference for reader navigation. `path` is for byte access.
+    public var href: String {
+        path.addingPercentEncoding(withAllowedCharacters:
+            .urlPathAllowed.subtracting(CharacterSet(charactersIn: "#%?")))!
+    }
     public let mediaType: String
     public let properties: Set<String>
 }
 
+public enum EPUBLayout: String, Sendable { case reflowable, prePaginated }
+
 public struct EPUBSpineItem: Equatable, Sendable {
     public let resource: EPUBResource
     public let isLinear: Bool
+    public let layout: EPUBLayout
 }
 
 public struct EPUBNavigationItem: Equatable, Sendable {
@@ -75,7 +83,9 @@ public struct EPUBPublication: Sendable {
     }
 
     /// Synchronous for CLI/background use. Call off the main actor for large books.
-    public static func open(at url: URL, limits: EPUBImportLimits = .init()) throws -> Self {
+    /// `onProgress` receives cumulative expanded bytes on the importing thread; keep it brief.
+    public static func open(at url: URL, limits: EPUBImportLimits = .init(),
+                            onProgress: (@Sendable (Int) -> Void)? = nil) throws -> Self {
         guard url.isFileURL else { throw EPUBPublicationError.unsafePath(url.absoluteString) }
         let handle = try FileHandle(forReadingFrom: url)
         defer { try? handle.close() }
@@ -83,10 +93,12 @@ public struct EPUBPublication: Sendable {
             throw EPUBPublicationError.limitExceeded("archiveBytes")
         }
         let data = try handle.read(upToCount: limits.archiveBytes + 1) ?? Data()
-        return try open(data: data, limits: limits)
+        return try open(data: data, limits: limits, onProgress: onProgress)
     }
 
-    public static func open(data: Data, limits: EPUBImportLimits = .init()) throws -> Self {
+    /// `onProgress` receives cumulative expanded bytes synchronously, after each decoded chunk.
+    public static func open(data: Data, limits: EPUBImportLimits = .init(),
+                            onProgress: (@Sendable (Int) -> Void)? = nil) throws -> Self {
         try Task.checkCancellation()
         guard limits.archiveBytes > 0, data.count <= limits.archiveBytes,
               limits.resourceBytes > 0, limits.expandedBytes > 0, limits.entryCount > 0,
@@ -121,6 +133,8 @@ public struct EPUBPublication: Sendable {
                 }
                 bytes.append(chunk)
                 total += chunk.count
+                onProgress?(total)
+                try Task.checkCancellation()
             }
             guard crc == entry.checksum else { throw EPUBPublicationError.invalidArchive("CRC: \(path)") }
             contents[path] = bytes
@@ -194,11 +208,18 @@ public struct EPUBPublication: Sendable {
             resources.append(resource)
             byID[id] = resource
         }
+        let fixedLayout = metadataNode?.children.contains {
+            $0.name == "meta" && $0.attributes["property"] == "rendition:layout" && $0.text == "pre-paginated"
+        } ?? false
         let spine = try spineNode.children.filter { $0.name == "itemref" }.map { item in
             guard let ref = item.attributes["idref"], let resource = byID[ref] else {
                 throw EPUBPublicationError.invalidXML("Spine idref")
             }
-            return EPUBSpineItem(resource: resource, isLinear: item.attributes["linear"] != "no")
+            let properties = Set((item.attributes["properties"] ?? "").split(whereSeparator: \.isWhitespace))
+            let fixed = properties.contains("rendition:layout-pre-paginated") ||
+                (fixedLayout && !properties.contains("rendition:layout-reflowable"))
+            return EPUBSpineItem(resource: resource, isLinear: item.attributes["linear"] != "no",
+                                layout: fixed ? .prePaginated : .reflowable)
         }
         guard !spine.isEmpty else { throw EPUBPublicationError.invalidXML("Empty spine") }
         var toc: [EPUBNavigationItem] = []
@@ -271,7 +292,9 @@ public struct EPUBPublication: Sendable {
         let result = stack.joined(separator: "/")
         guard isSafePath(result) else { throw EPUBPublicationError.unsafePath(href) }
         let encoded = result.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed.subtracting(CharacterSet(charactersIn: "#%?")))!
-        return encoded + (parts.count == 2 ? "#" + String(parts[1]) : "")
+        let fragment = parts.count == 2 ? "#" + parts[1].addingPercentEncoding(
+            withAllowedCharacters: .urlFragmentAllowed.subtracting(CharacterSet(charactersIn: "#%")))! : ""
+        return encoded + fragment
     }
 }
 

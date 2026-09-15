@@ -27,14 +27,27 @@ public enum Fixture {
         return try archive(files)
     }
     public static func archive(_ files: [String: String]) throws -> Data {
+        try archive(files.mapValues { Data($0.utf8) })
+    }
+    public static func archive(_ files: [String: Data]) throws -> Data {
         let archive = try Archive(accessMode: .create)
         for name in files.keys.sorted(by: { a, b in a == "mimetype" || (b != "mimetype" && a < b) }) {
-            let bytes = Data(files[name]!.utf8)
+            let bytes = files[name]!
             try archive.addEntry(with: name, type: .file, uncompressedSize: Int64(bytes.count),
                                  compressionMethod: name == "mimetype" ? .none : .deflate) { position, size in
                 bytes.subdata(in: Int(position)..<(Int(position) + size))
             }
         }
         return archive.data!
+    }
+    public static func files(epub2: Bool = false) throws -> [String: Data] {
+        let source = try Archive(data: epub(epub2: epub2), accessMode: .read)
+        var files: [String: Data] = [:]
+        for entry in source {
+            var data = Data()
+            _ = try source.extract(entry) { data.append($0) }
+            files[entry.path] = data
+        }
+        return files
     }
 }

@@ -1,0 +1,51 @@
+name: ReaderSample
+options:
+  deploymentTarget:
+    iOS: "27.0"
+    macOS: "27.0"
+packages:
+  EPUBReaderLib:
+    path: ../..
+settings:
+  base:
+    SWIFT_VERSION: "6.2"
+    GENERATE_INFOPLIST_FILE: YES
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: 1
+targets:
+  ReaderSample:
+    type: application
+    platform: iOS
+    sources:
+      - Shared
+      - ReaderSampleApp.swift
+      - Resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.epubreaderlib.sample
+        TARGETED_DEVICE_FAMILY: "1,2"
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+    dependencies:
+      - package: EPUBReaderLib
+        product: EPUBReaderLib
+      - package: EPUBReaderLib
+        product: EPUBReaderFoliate
+  ReaderSampleMac:
+    type: application
+    platform: macOS
+    sources:
+      - Shared
+      - ReaderSampleApp.swift
+      - Resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.epubreaderlib.sample.mac
+        ENABLE_APP_SANDBOX: YES
+        ENABLE_OUTGOING_NETWORK_CONNECTIONS: YES
+        ENABLE_USER_SELECTED_FILES: readonly
+    dependencies:
+      - package: EPUBReaderLib
+        product: EPUBReaderLib
+      - package: EPUBReaderLib
+        product: EPUBReaderFoliate

@@ -14,6 +14,7 @@ public struct EPUBEngineBookmark: Codable, Equatable, Sendable {
 /// Engines must reject incompatible bookmarks; matching text/href is a separate, potentially approximate operation.
 public struct EPUBLocation: Codable, Equatable, Sendable {
     public var publicationID: String
+    /// URL-encoded archive-relative reference, compatible with `.navigate(href:)`.
     public var href: String?
     public var progression: Double?
     public var title: String?
@@ -67,6 +68,7 @@ public enum EPUBReaderError: Error, Equatable, Sendable {
 }
 
 public enum EPUBReaderEvent: Equatable, Sendable {
+    /// Emitted exactly once per session when commands can be submitted.
     case ready
     case relocated(EPUBLocation)
     case selectionChanged(EPUBSelection?)

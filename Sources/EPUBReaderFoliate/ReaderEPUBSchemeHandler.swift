@@ -145,9 +145,15 @@ final class ReaderEPUBSchemeHandler: NSObject, WKURLSchemeHandler {
         case .failure(let refusal):
             fail(task, refusal)
         case .success(let (route, fileURL)):
-            guard let data = (route == .book ? source.bookData : nil)
+            guard var data = (route == .book ? source.bookData : nil)
                 ?? (try? Data(contentsOf: fileURL, options: .mappedIfSafe)) else {
                 return fail(task, .unreadable(fileURL.lastPathComponent))
+            }
+            if route == .library("epub.js") {
+                guard let patched = try? ReaderEPUBURLPatch.apply(to: data) else {
+                    return fail(task, .unreadable("epub.js compatibility patch"))
+                }
+                data = patched
             }
             var headers = [
                 "Content-Type": ReaderEPUBRouter.mediaType(for: route),
