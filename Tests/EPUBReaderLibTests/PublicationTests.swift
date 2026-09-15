@@ -91,3 +91,11 @@ extension PublicationTests {
         XCTAssertEqual(book.archiveData, data)
     }
 }
+
+extension PublicationTests {
+    func testHTMLDoctypeAllowsOrdinaryBracketsInNavigationText() throws {
+        let xml = "<!DOCTYPE html><html xmlns='http://www.w3.org/1999/xhtml' xmlns:epub='http://www.idpf.org/2007/ops'><body><nav epub:type='toc'><ol><li><a href='one.xhtml'>Chapter [One]</a></li></ol></nav></body></html>"
+        let book = try EPUBPublication.open(data: Fixture.epub(overrides: ["OPS/nav.xhtml": xml]))
+        XCTAssertEqual(book.tableOfContents[0].title, "Chapter [One]")
+    }
+}

@@ -28,6 +28,10 @@ import XCTest
         window.orderFront(nil)
         defer { session.close(); window.close() }
         try await wait { events.contains(.ready) }
+        for invalid in ["", "#fragment", "https://example.invalid/", "../secret"] {
+            do { try await session.send(.navigate(href: invalid)); XCTFail("Invalid href accepted") }
+            catch { guard case .invalidCommand = error as? EPUBReaderError else { return XCTFail("Wrong error: \(error)") } }
+        }
         let webView = try XCTUnwrap(foliate.model.webView)
         let rendered = try await webView.evaluateJavaScript("""
             document.querySelector('foliate-view').renderer.getContents().some(c => {

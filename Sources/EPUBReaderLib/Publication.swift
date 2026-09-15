@@ -294,8 +294,9 @@ private final class XMLTree: NSObject, XMLParserDelegate {
     static func parse(_ data: Data, path: String) throws -> XMLNode {
         // Removing zero bytes also catches ASCII declaration tokens in UTF-16/32 XML.
         let declarationProbe = String(decoding: data.filter { $0 != 0 }, as: UTF8.self).uppercased()
-        guard !declarationProbe.contains("<!ENTITY"), !declarationProbe.contains("<!DOCTYPE") ||
-                !declarationProbe.contains("[") else { throw EPUBPublicationError.invalidXML(path) }
+        guard !declarationProbe.contains("<!ENTITY"),
+              declarationProbe.range(of: "<!DOCTYPE[^>]*\\[", options: .regularExpression) == nil
+        else { throw EPUBPublicationError.invalidXML(path) }
         let delegate = XMLTree()
         let parser = XMLParser(data: data)
         parser.shouldResolveExternalEntities = false

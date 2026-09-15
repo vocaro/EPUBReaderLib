@@ -66,7 +66,10 @@ import WebKit
         case .nextPage: commands = [.nextPage]
         case .previousPage: commands = [.previousPage]
         case .navigate(let href):
-            let path = String(href.split(separator: "#", maxSplits: 1)[0]).removingPercentEncoding
+            guard let reference = href.split(separator: "#", maxSplits: 1).first, !href.hasPrefix("#") else {
+                throw EPUBReaderError.invalidCommand("Empty publication href")
+            }
+            let path = String(reference).removingPercentEncoding
             guard let path, publication.resources.contains(where: { $0.path == path }),
                   URLComponents(string: href)?.scheme == nil else {
                 throw EPUBReaderError.invalidCommand("Unknown publication href")
