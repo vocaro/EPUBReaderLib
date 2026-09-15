@@ -1,0 +1,37 @@
+#if os(macOS)
+import WebKit
+import XCTest
+@testable import EPUBReaderFoliate
+
+@MainActor
+final class ReaderEPUBMacRenderingTests: XCTestCase {
+    private static let unusedSource = ReaderEPUBAssetSource(
+        resourceRoot: URL(fileURLWithPath: "/nonexistent/epub-reader"),
+        bookURL: URL(fileURLWithPath: "/nonexistent/book.epub"))
+
+    private func makeWebView(isDark: Bool) -> ReaderEPUBSelectingWebView {
+        let representable = ReaderEPUBWebView(
+            source: Self.unusedSource, model: ReaderEPUBPrototypeModel(),
+            onAskAboutSelection: { _ in }, isDark: isDark)
+        let coordinator = representable.makeCoordinator()
+        return representable.makeView(coordinator: coordinator)
+    }
+
+    func testDarkAppearanceIsAppliedExplicitlyToTheWebViewOnMac() {
+        let view = makeWebView(isDark: true)
+        XCTAssertEqual(
+            view.appearance?.name, NSAppearance.Name.darkAqua,
+            "a dark-appearance reader web view should carry an explicit dark NSAppearance, so "
+                + "a live web content process cannot resolve its own prefers-color-scheme "
+                + "independently of the app's real appearance")
+    }
+
+    func testLightAppearanceIsAppliedExplicitlyToTheWebViewOnMac() {
+        let view = makeWebView(isDark: false)
+        XCTAssertEqual(
+            view.appearance?.name, NSAppearance.Name.aqua,
+            "a light-appearance reader web view should carry an explicit light NSAppearance, for "
+                + "the same reason as the dark case")
+    }
+}
+#endif
