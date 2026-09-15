@@ -172,7 +172,7 @@ private final class XHTMLTextReader {
         let startsBody = html && local == "body" && stack.count == 1 && stack.last?.name == "html"
         if startsBody { bodyCount += 1 }
         let inBody = startsBody || stack.last?.body == true
-        let suppressed = stack.last?.suppressed == true || (html && ["script", "style", "template"].contains(local))
+        let suppressed = stack.last?.suppressed == true || ["script", "style", "template"].contains(local)
         let startsTitle = html && local == "title" && stack.count == 2 && stack.last?.name == "head" && !capturedTitle
         if startsTitle { capturedTitle = true }
         let block = html && Self.blocks.contains(local) && inBody && !suppressed

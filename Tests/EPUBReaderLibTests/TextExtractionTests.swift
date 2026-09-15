@@ -29,6 +29,11 @@ final class TextExtractionTests: XCTestCase {
         XCTAssertEqual(section.text, "Visible heading\nRead me.")
     }
 
+    func testEmbeddedSVGScriptAndStyleAreNotText() throws {
+        let section = try book("<svg xmlns='http://www.w3.org/2000/svg'><script>bad script</script><style>bad style</style><text>Diagram label</text></svg>").textSection(at: 0)
+        XCTAssertEqual(section.text, "Diagram label")
+    }
+
     func testInlineMarkupEntitiesCDATAAndWordJoiners() throws {
         let section = try book("<p>un<em>break</em>able &amp; &#8217; m\u{FEFF}— A<![CDATA[<B>]]>C &#xfeff;</p>").textSection(at: 0)
         XCTAssertEqual(section.text, "unbreakable & ’ m\u{FEFF}— A<B>C \u{FEFF}")

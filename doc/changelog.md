@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.2.1
+
+- Exclude script/style/template text inside embedded foreign content such as SVG, while preserving diagram labels.
+- Add a regression for embedded SVG text extraction. Public API signatures are unchanged.
+
 ## 0.2.0
 
 - Public `EPUBTextSection` and `EPUBPublication.textSection(at:limits:)` API for renderer-free XHTML extraction.
