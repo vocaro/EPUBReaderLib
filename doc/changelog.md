@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.2.4
+
+- Stop drawing the continuous-scroll edge fade on macOS, where the host has no chrome floating over the page ([vocaro/studywright#155](https://github.com/vocaro/studywright/issues/155)). iOS rendering is unchanged.
+- Public APIs, dependencies and bookmark formats are unchanged.
+
 ## 0.2.3
 
 - Use adaptive CSS system colors for the Foliate dark-mode fallback.

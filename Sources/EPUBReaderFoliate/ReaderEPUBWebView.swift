@@ -130,6 +130,16 @@ struct ReaderEPUBWebView {
 
     static let messageHandlerName = "studywrightReader"
 
+    #if os(macOS)
+    /// Marks the reader page as macOS before bootstrap.js runs. The Mac host keeps its controls in
+    /// the window toolbar rather than floating over the page, so bootstrap.js skips the
+    /// continuous-scroll edge fade when this class is present. The strips are page DOM, so the
+    /// mark has to reach the page; a user script is not subject to the page's script-src policy.
+    static let macOSPageClass = "sw-macos"
+    static let macOSPageScriptSource =
+        "document.documentElement.classList.add('\(macOSPageClass)')"
+    #endif
+
     @MainActor private func applyAppearance(to view: ReaderEPUBSelectingWebView) {
         #if os(iOS)
         let background = isDark ? UIColor.black : UIColor.white
@@ -163,6 +173,11 @@ struct ReaderEPUBWebView {
         configuration.websiteDataStore = .nonPersistent()
         configuration.userContentController.add(
             coordinator, name: Self.messageHandlerName)
+        #if os(macOS)
+        configuration.userContentController.addUserScript(WKUserScript(
+            source: Self.macOSPageScriptSource, injectionTime: .atDocumentStart,
+            forMainFrameOnly: true))
+        #endif
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
 
         let view = ReaderEPUBSelectingWebView(frame: .zero, configuration: configuration)

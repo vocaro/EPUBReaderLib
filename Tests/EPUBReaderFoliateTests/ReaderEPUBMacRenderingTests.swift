@@ -33,5 +33,13 @@ final class ReaderEPUBMacRenderingTests: XCTestCase {
             "a light-appearance reader web view should carry an explicit light NSAppearance, for "
                 + "the same reason as the dark case")
     }
+
+    func testReaderPageIsMarkedAsMacBeforeBootstrapRuns() {
+        let scripts = makeWebView(isDark: false).configuration.userContentController.userScripts
+        let mark = scripts.filter { $0.source == ReaderEPUBWebView.macOSPageScriptSource }
+        XCTAssertEqual(mark.count, 1, "the Mac reader page should be marked exactly once")
+        XCTAssertEqual(mark.first?.injectionTime, .atDocumentStart)
+        XCTAssertEqual(mark.first?.isForMainFrameOnly, true)
+    }
 }
 #endif

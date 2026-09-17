@@ -512,8 +512,13 @@ let edgeFadeRenderer = null
 /// than a binary show/hide would be.
 const EDGE_FADE_RAMP_PX = 24
 
+/// The fade stands in for floating iOS chrome over the page. The Mac host keeps every control in
+/// the window toolbar, so there the strips would only dim text. `ReaderEPUBWebView` marks the
+/// page with this class on macOS before this file runs.
+const edgeFadeDisabled = () => document.documentElement.classList.contains('sw-macos')
+
 const createEdgeFadesIfNeeded = () => {
-    if (edgeFadeTop) return
+    if (edgeFadeTop || edgeFadeDisabled()) return
     edgeFadeTop = document.createElement('div')
     edgeFadeTop.className = 'sw-edge-fade'
     edgeFadeTop.dataset.edge = 'top'

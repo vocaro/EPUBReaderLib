@@ -71,6 +71,35 @@ import XCTest
         catch { XCTAssertEqual(error as? EPUBReaderError, .closed) }
         XCTAssertEqual(events.count, count)
     }
+    func testScrolledEdgeFadeIsDrawnOnIOSOnly() async throws {
+        let publication = try EPUBPublication.open(data: Fixture.epub())
+        var events: [EPUBReaderEvent] = []
+        let session = try FoliateEngine().makeSession(publication: publication, selectionAction: nil) { events.append($0) }
+        let foliate = try XCTUnwrap(session as? FoliateSession)
+        let window = ReaderTestWindow(session: session)
+        defer { session.close(); window.close() }
+        try await wait { events.contains(.ready) }
+        try await session.send(.style(.init(flow: .scrolled)))
+        let webView = try XCTUnwrap(foliate.model.webView)
+        var state: [String: Any] = [:]
+        let deadline = Date().addingTimeInterval(20)
+        repeat {
+            try await Task.sleep(for: .milliseconds(50))
+            state = try await webView.evaluateJavaScript("""
+                ({ scrolled: document.querySelector('foliate-view').renderer.scrolled === true,
+                   marked: document.documentElement.classList.contains('sw-macos'),
+                   strips: document.querySelectorAll('.sw-edge-fade').length })
+                """) as? [String: Any] ?? [:]
+        } while state["scrolled"] as? Bool != true && Date() < deadline
+        XCTAssertEqual(state["scrolled"] as? Bool, true)
+        #if os(macOS)
+        XCTAssertEqual(state["marked"] as? Bool, true)
+        XCTAssertEqual(state["strips"] as? Int, 0, "the Mac reader must not draw the scroll-edge fade")
+        #else
+        XCTAssertEqual(state["marked"] as? Bool, false)
+        XCTAssertEqual(state["strips"] as? Int, 2, "iOS keeps the scroll-edge fade under floating chrome")
+        #endif
+    }
     func testNotReadyAndCancellationDoNotSubmit() async throws {
         let book = try EPUBPublication.open(data: Fixture.epub())
         let session = try FoliateEngine().makeSession(publication: book) { _ in XCTFail("Unmounted reader emitted") }
